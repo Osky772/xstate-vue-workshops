@@ -28,6 +28,11 @@ const counterMachine = createMachine({
           target: "error",
         },
       },
+      on: {
+        CANCEL: {
+          target: "normal",
+        }
+      }
     },
     error: {
       on: {
@@ -71,6 +76,7 @@ const {state, send} = useMachine(counterMachine, {devTools: true});
     <p>State: {{state.value}}</p>
     <p>Count: {{state.context.count}}</p>
     <button @click="send('INCREMENT')">Increment</button>
+    <button @click="send('CANCEL')">Cancel</button>
   </section>
 </template>
 
