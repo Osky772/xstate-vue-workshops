@@ -11,6 +11,7 @@ function increment() {
     setTimeout(() => {
       const randomSuccess = Math.random() > 0.5
       if (randomSuccess) {
+        isError.value = false
         count.value++
         resolve()
       } else {
@@ -21,6 +22,10 @@ function increment() {
   }) 
 }
 
+function cancel() {
+  
+}
+
 </script>
 
 <template>
@@ -28,6 +33,7 @@ function increment() {
     <h1>{{isLoading ? 'Loading...' : 'Counter app'}}</h1>
     <p>Count: {{count}}</p>
     <button @click="increment">Increment</button>
+    <button @click="cancel">Cancel</button>
   </section>
 </template>
 
