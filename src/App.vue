@@ -1,5 +1,5 @@
 <script setup>
-import {createMachine} from "xstate";
+import {createMachine, assign} from "xstate";
 import {useMachine} from "@xstate/vue";
 
 const counterMachine = createMachine({
@@ -11,59 +11,28 @@ const counterMachine = createMachine({
   states: {
     normal: {
       on: {
-        DECREMENT: {
-          target: "loading.decrement",
-        },
         INCREMENT: {
-          target: "loading.increment",
+          target: "loading",
         },
       },
     },
     loading: {
-      states: {
-        increment: {
-          invoke: {
-            src: "invokeIncrementPromise",
-            id: "invokeIncrementPromise",
-            onDone: {
-              target: "#Counter.normal",
-              actions: [
-                (context, event) => {
-                  context.count++;
-                },
-              ],
-            },
-            onError: {
-              target: "#Counter.error",
-            },
-          },
+      invoke: {
+        src: "invokeIncrementPromise",
+        id: "incrementPromise",
+        onDone: {
+          target: "normal",
+          actions: "increment",
         },
-        decrement: {
-          invoke: {
-            src: "invokeDecrementPromise",
-            id: "invokeDecrementPromise",
-            onDone: {
-              target: "#Counter.normal",
-              actions: [
-                (context, event) => {
-                  context.count--;
-                },
-              ],
-            },
-            onError: {
-              target: "#Counter.error",
-            },
-          },
+        onError: {
+          target: "error",
         },
-      }
+      },
     },
     error: {
       on: {
         INCREMENT: {
-          target: "loading.increment",
-        },
-        DECREMENT: {
-          target: "loading.decrement",
+          target: "loading",
         },
       },
     },
@@ -71,20 +40,13 @@ const counterMachine = createMachine({
   predictableActionArguments: true,
   preserveActionOrder: true,
 }, {
+  actions: {
+    increment: assign({
+      count: (context) => context.count + 1,
+    }),
+  },
   services: {
-    invokeIncrementPromise: (context) => {
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          const randomSuccess = Math.random() > 0.5;
-          if (randomSuccess) {
-            resolve();
-          } else {
-            reject();
-          }
-        }, 1000);
-      });
-    },
-    invokeDecrementPromise: (context) => {
+    invokeIncrementPromise: () => {
       return new Promise((resolve, reject) => {
         setTimeout(() => {
           const randomSuccess = Math.random() > 0.5;
@@ -104,12 +66,11 @@ const {state, send} = useMachine(counterMachine, {devTools: true});
 </script>
 
 <template>
-  <section :class="[state.matches('error') && '.error']"> 
-    <h1>Counter app</h1>
+  <section :class="[state.matches('error') && 'error']"> 
+    <h1>{{state.matches('loading') ? 'Loading...' : 'Counter app'}}</h1>
     <p>State: {{state.value}}</p>
     <p>Count: {{state.context.count}}</p>
     <button @click="send('INCREMENT')">Increment</button>
-    <button @click="send('DECREMENT')">Decrement</button>
   </section>
 </template>
 
