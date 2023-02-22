@@ -1,82 +1,33 @@
 <script setup>
-import {createMachine, assign} from "xstate";
-import {useMachine} from "@xstate/vue";
+import { ref } from 'vue'
 
-const counterMachine = createMachine({
-  id: "Counter",
-  initial: "normal",
-  context: {
-    count: 0
-  },
-  states: {
-    normal: {
-      on: {
-        INCREMENT: {
-          target: "loading",
-        },
-      },
-    },
-    loading: {
-      invoke: {
-        src: "invokeIncrementPromise",
-        id: "incrementPromise",
-        onDone: {
-          target: "normal",
-          actions: "increment",
-        },
-        onError: {
-          target: "error",
-        },
-      },
-      on: {
-        CANCEL: {
-          target: "normal",
-        }
+const count = ref(0)
+const isLoading = ref(false)
+const isError = ref(false)
+
+function increment() {
+  return new Promise((resolve) => {
+    isLoading.value = true
+    setTimeout(() => {
+      const randomSuccess = Math.random() > 0.5
+      if (randomSuccess) {
+        count.value++
+        resolve()
+      } else {
+        isError.value = true
       }
-    },
-    error: {
-      on: {
-        INCREMENT: {
-          target: "loading",
-        },
-      },
-    },
-  },
-  predictableActionArguments: true,
-  preserveActionOrder: true,
-}, {
-  actions: {
-    increment: assign({
-      count: (context) => context.count + 1,
-    }),
-  },
-  services: {
-    invokeIncrementPromise: () => {
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          const randomSuccess = Math.random() > 0.5;
-          if (randomSuccess) {
-            resolve();
-          } else {
-            reject();
-          }
-        }, 1000);
-      });
-    },
-  }
-});
-
-const {state, send} = useMachine(counterMachine, {devTools: true});
+      isLoading.value = false
+    }, 1000)
+  }) 
+}
 
 </script>
 
 <template>
-  <section :class="[state.matches('error') && 'error']"> 
-    <h1>{{state.matches('loading') ? 'Loading...' : 'Counter app'}}</h1>
-    <p>State: {{state.value}}</p>
-    <p>Count: {{state.context.count}}</p>
-    <button @click="send('INCREMENT')">Increment</button>
-    <button @click="send('CANCEL')">Cancel</button>
+  <section :class="[isError && 'error']"> 
+    <h1>{{isLoading ? 'Loading...' : 'Counter app'}}</h1>
+    <p>Count: {{count}}</p>
+    <button @click="increment">Increment</button>
   </section>
 </template>
 
